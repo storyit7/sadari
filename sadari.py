@@ -79,54 +79,39 @@ def draw_ladder(ladder, n_people, n_rows, markers=None):
     return fig
 
 def main():
-    st.title("비주얼 사다리 게임")
+    st.markdown("<h2 style='text-align: center;'>비주얼 사다리 게임</h2>", unsafe_allow_html=True)
     
-    # 좌우 영역 분할: 왼쪽은 참가자 정보, 오른쪽은 사다리 및 내기명 입력란
-    left_col, right_col = st.columns([1, 1])
+    # 인원수 입력 및 참가자 정보 입력
+    n_people = st.number_input("인원수를 입력하세요:", min_value=2, value=5, step=1)
+    st.subheader("참가자 정보 입력")
+    cols = st.columns(n_people)
+    names = []
+    bets = []
+    base_colors = ['red', 'blue', 'green', 'orange', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
+    colors = [base_colors[i % len(base_colors)] for i in range(n_people)]
+    for i in range(n_people):
+        with cols[i]:
+            st.markdown(f"<div style='text-align:center; color:{colors[i]}; font-weight:bold;'>{i+1}번 참가자</div>", unsafe_allow_html=True)
+            name = st.text_input("이름", value=f"사람{i+1}", key=f"name_{i}")
+            bet = st.text_input("내기명", value=f"내기{i+1}", key=f"bet_{i}")
+            names.append(name)
+            bets.append(bet)
     
-    # 왼쪽 영역: 참가자 이름 입력
-    with left_col:
-        n_people = st.number_input("인원수를 입력하세요:", min_value=2, value=5, step=1)
-        st.subheader("참가자 정보 입력")
-        name_cols = st.columns(n_people)
-        names = []
-        base_colors = ['red', 'blue', 'green', 'orange', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
-        colors = [base_colors[i % len(base_colors)] for i in range(n_people)]
-        for i in range(n_people):
-            with name_cols[i]:
-                # 참가자 번호와 이름 입력란, 번호 텍스트의 색상을 해당 참가자의 색상으로 표시
-                st.markdown(f"<div style='text-align:center; color:{colors[i]}; font-weight:bold;'>{i+1}번 참가자</div>", unsafe_allow_html=True)
-                name = st.text_input("이름", value=f"사람{i+1}", key=f"name_{i}")
-                names.append(name)
-        # 게임 시작 버튼 (왼쪽 영역 하단에 배치)
-        start_game = st.button("게임 시작", key="start_button")
+    # 게임 시작 버튼을 먼저 표시 (사다리 이미지 위쪽에 위치)
+    game_start = st.button("게임 시작", key="start_button")
     
-    # 오른쪽 영역: 사다리 이미지와 아래쪽에 내기명 입력란
-    with right_col:
-        # 사다리 영역 placeholder (초기엔 열만 표시)
-        ladder_placeholder = st.empty()
-        ladder_placeholder.pyplot(draw_columns(n_people))
-        
-        # 사다리 이미지 아래쪽에 내기명 입력란을 표시
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.subheader("내기명 입력")
-        bet_cols = st.columns(n_people)
-        bets = []
-        for i in range(n_people):
-            with bet_cols[i]:
-                # 내기명 입력란 옆에 번호나 색상을 표시하면 식별하기 쉽습니다.
-                st.markdown(f"<div style='text-align:center; color:{colors[i]}; font-weight:bold;'>내기 {i+1}</div>", unsafe_allow_html=True)
-                bet = st.text_input("", value=f"내기{i+1}", key=f"bet_{i}")
-                bets.append(bet)
+    # 사다리 영역 placeholder 생성 및 초기 세로 열 표시
+    ladder_placeholder = st.empty()
+    ladder_placeholder.pyplot(draw_columns(n_people))
     
-    if start_game:
+    if game_start:
         n_rows = random.randint(10, 20)
         st.write(f"랜덤 생성된 사다리 층 수: {n_rows}")
         ladder = generate_ladder(n_people, n_rows)
         paths = [simulate_path(ladder, i) for i in range(n_people)]
         finished_markers = []  # 이미 애니메이션이 완료된 참가자들의 최종 위치
         
-        # 동일한 placeholder 영역에서 1번 참가자부터 순차적으로 애니메이션 진행
+        # 1번 참가자부터 순차적으로 애니메이션 진행 (원 이동 속도: 0.1초 간격; 기존 0.3초에서 3배 빠름)
         for i in range(n_people):
             current_path = paths[i]
             for pos in current_path:
@@ -134,7 +119,7 @@ def main():
                 markers.append((pos[0], pos[1], colors[i]))
                 fig = draw_ladder(ladder, n_people, n_rows, markers=markers)
                 ladder_placeholder.pyplot(fig)
-                time.sleep(0.1)  # 애니메이션 딜레이 (원래 0.3초에서 3배 빠름)
+                time.sleep(0.2)
             finished_markers.append((current_path[-1][0], current_path[-1][1], colors[i]))
         
         # 최종 결과 출력 (1-indexed)

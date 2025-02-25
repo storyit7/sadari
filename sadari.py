@@ -56,7 +56,7 @@ def simulate_path(ladder, start):
 
 def draw_ladder(ladder, n_people, n_rows, markers=None):
     """
-    Matplotlib를 사용하여 사다리 전체(세로열 + 가로줄)와 현재까지 진행된 참가자들의 마커(원)를 그립니다.
+    Matplotlib를 사용하여 사다리 전체(세로열 + 가로줄)와 진행된 참가자들의 마커(원)를 그립니다.
     markers: (x, y, color) 튜플 리스트
     """
     fig, ax = plt.subplots(figsize=(n_people * 0.8, n_rows / 3))
@@ -81,11 +81,9 @@ def draw_ladder(ladder, n_people, n_rows, markers=None):
 def main():
     st.title("비주얼 사다리 게임")
     
-    # 인원수 입력
+    # 인원수 입력 및 참가자 정보 입력
     n_people = st.number_input("인원수를 입력하세요:", min_value=2, value=5, step=1)
-    
     st.subheader("참가자 정보 입력")
-    # 참가자별 이름과 내기명 입력란 (컬럼별로 가로 배열)
     cols = st.columns(n_people)
     names = []
     bets = []
@@ -99,21 +97,21 @@ def main():
             names.append(name)
             bets.append(bet)
     
-    # 하나의 placeholder를 생성해 사다리 영역을 표시 (초기에는 열만 그립니다)
+    # 게임 시작 버튼을 먼저 표시 (사다리 이미지 위쪽에 위치)
+    game_start = st.button("게임 시작", key="start_button")
+    
+    # 사다리 영역 placeholder 생성 및 초기 세로 열 표시
     ladder_placeholder = st.empty()
     ladder_placeholder.pyplot(draw_columns(n_people))
     
-    if st.button("게임 시작"):
-        # 게임 시작 시, 랜덤 층 수(10~20층)로 사다리 가로줄 생성
+    if game_start:
         n_rows = random.randint(10, 20)
         st.write(f"랜덤 생성된 사다리 층 수: {n_rows}")
         ladder = generate_ladder(n_people, n_rows)
-        
-        # 각 참가자의 경로 시뮬레이션 (출발열 순서대로)
         paths = [simulate_path(ladder, i) for i in range(n_people)]
         finished_markers = []  # 이미 애니메이션이 완료된 참가자들의 최종 위치
         
-        # 동일한 placeholder 영역에서 1번 참가자부터 순차적으로 애니메이션 진행
+        # 1번 참가자부터 순차적으로 애니메이션 진행 (원 이동 속도: 0.1초 간격; 기존 0.3초에서 3배 빠름)
         for i in range(n_people):
             current_path = paths[i]
             for pos in current_path:
@@ -121,7 +119,7 @@ def main():
                 markers.append((pos[0], pos[1], colors[i]))
                 fig = draw_ladder(ladder, n_people, n_rows, markers=markers)
                 ladder_placeholder.pyplot(fig)
-                time.sleep(0.3)
+                time.sleep(0.1)
             finished_markers.append((current_path[-1][0], current_path[-1][1], colors[i]))
         
         # 최종 결과 출력 (1-indexed)
